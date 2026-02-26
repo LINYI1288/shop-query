@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>消费查询</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: #f5f5f5;
+    display: flex;
+    justify-content: center;
+    padding: 40px 16px;
+  }
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 32px 28px;
+    width: 100%;
+    max-width: 480px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+  h1 { font-size: 22px; color: #222; margin-bottom: 24px; text-align: center; }
+  .search-row { display: flex; gap: 8px; margin-bottom: 24px; }
+  input[type=text] {
+    flex: 1; padding: 10px 14px;
+    border: 1px solid #ddd; border-radius: 8px;
+    font-size: 15px; outline: none;
+  }
+  input[type=text]:focus { border-color: #4a90e2; }
+  button {
+    padding: 10px 20px; background: #4a90e2; color: #fff;
+    border: none; border-radius: 8px; font-size: 15px; cursor: pointer;
+  }
+  button:hover { background: #357abd; }
+  .item {
+    border: 1px solid #eee; border-radius: 8px;
+    padding: 14px 16px; margin-bottom: 10px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .name { font-size: 16px; font-weight: 600; color: #222; }
+  .phone { font-size: 13px; color: #888; margin-top: 2px; }
+  .amount { font-size: 20px; font-weight: 700; color: #e05c2a; }
+  .amount::before { content: '¥'; font-size: 14px; }
+  .empty { text-align: center; color: #aaa; padding: 20px 0; font-size: 14px; }
+  .upload-section {
+    margin-top: 32px; border-top: 1px solid #eee; padding-top: 20px;
+  }
+  .upload-section p { font-size: 13px; color: #888; margin-bottom: 10px; }
+  .upload-row { display: flex; gap: 8px; align-items: center; }
+  input[type=file] { flex: 1; font-size: 13px; }
+  .upload-btn {
+    padding: 8px 16px; background: #52c41a; font-size: 13px;
+    white-space: nowrap;
+  }
+  .upload-btn:hover { background: #3a9912; }
+  #upload-msg { font-size: 13px; margin-top: 8px; color: #52c41a; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>消费金额查询</h1>
+  <div class="search-row">
+    <input id="q" type="text" placeholder="输入姓名或手机号" />
+    <button onclick="search()">查询</button>
+  </div>
+  <div id="result"></div>
+
+  <div class="upload-section">
+    <p>店主更新数据：上传新的 Excel 文件</p>
+    <div class="upload-row">
+      <input type="file" id="excel-file" accept=".xlsx,.xls" />
+      <button class="upload-btn" onclick="uploadFile()">上传更新</button>
+    </div>
+    <div id="upload-msg"></div>
+  </div>
+</div>
+<script>
+  document.getElementById('q').addEventListener('keydown', e => {
+    if (e.key === 'Enter') search();
+  });
+
+  async function search() {
+    const q = document.getElementById('q').value.trim();
+    const box = document.getElementById('result');
+    if (!q) { box.innerHTML = '<p class="empty">请输入姓名或手机号</p>'; return; }
+    box.innerHTML = '<p class="empty">查询中...</p>';
+    try {
+      const res = await fetch('/query?q=' + encodeURIComponent(q));
+      const { results } = await res.json();
+      if (!results.length) { box.innerHTML = '<p class="empty">未找到相关记录</p>'; return; }
+      box.innerHTML = results.map(r => `
+        <div class="item">
+          <div>
+            <div class="name">${r.name}</div>
+            <div class="phone">${r.phone}</div>
+          </div>
+          <div class="amount">${Number(r.amount).toFixed(2)}</div>
+        </div>
+      `).join('');
+    } catch { box.innerHTML = '<p class="empty">查询失败，请重试</p>'; }
+  }
+
+  async function uploadFile() {
+    const file = document.getElementById('excel-file').files[0];
+    const msg = document.getElementById('upload-msg');
+    if (!file) { msg.style.color='#e05c2a'; msg.textContent='请先选择文件'; return; }
+    const fd = new FormData();
+    fd.append('file', file);
+    msg.style.color='#888'; msg.textContent='上传中...';
+    try {
+      const res = await fetch('/upload', { method: 'POST', body: fd });
+      const json = await res.json();
+      if (json.success) {
+        msg.style.color='#52c41a';
+        msg.textContent = `更新成功，共 ${json.count} 条记录`;
+      } else {
+        msg.style.color='#e05c2a'; msg.textContent='更新失败：' + json.error;
+      }
+    } catch { msg.style.color='#e05c2a'; msg.textContent='上传失败，请重试'; }
+  }
+</script>
+</body>
+</html>
