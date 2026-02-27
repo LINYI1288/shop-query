@@ -9,6 +9,7 @@ const PORT = process.env.PORT || 3000;
 const DATA_PATH = path.join(__dirname, 'data.json');
 
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.json());
 
 const upload = multer({ dest: 'uploads/' });
 
@@ -39,12 +40,27 @@ app.get('/query', (req, res) => {
   res.json({ results });
 });
 
+app.post('/mark', (req, res) => {
+  const { phone } = req.body;
+  if (!phone) return res.status(400).json({ success: false });
+  const data = JSON.parse(fs.readFileSync(DATA_PATH, 'utf8'));
+  const item = data.find(d => d.phone === phone);
+  if (!item) return res.status(404).json({ success: false });
+  item.drawn = true;
+  fs.writeFileSync(DATA_PATH, JSON.stringify(data));
+  res.json({ success: true });
+});
+
 app.post('/upload', upload.single('file'), (req, res) => {
   try {
-    const data = parseExcel(req.file.path);
-    fs.writeFileSync(DATA_PATH, JSON.stringify(data));
+    const newData = parseExcel(req.file.path);
+    let oldData = [];
+    try { oldData = JSON.parse(fs.readFileSync(DATA_PATH, 'utf8')); } catch {}
+    const drawnPhones = new Set(oldData.filter(d => d.drawn).map(d => d.phone));
+    newData.forEach(d => { if (drawnPhones.has(d.phone)) d.drawn = true; });
+    fs.writeFileSync(DATA_PATH, JSON.stringify(newData));
     fs.unlinkSync(req.file.path);
-    res.json({ success: true, count: data.length });
+    res.json({ success: true, count: newData.length });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
   }
