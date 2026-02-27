@@ -44,18 +44,6 @@
   .amount { font-size: 20px; font-weight: 700; color: #e05c2a; }
   .amount::before { content: '¥'; font-size: 14px; }
   .empty { text-align: center; color: #aaa; padding: 20px 0; font-size: 14px; }
-  .upload-section {
-    margin-top: 32px; border-top: 1px solid #eee; padding-top: 20px;
-  }
-  .upload-section p { font-size: 13px; color: #888; margin-bottom: 10px; }
-  .upload-row { display: flex; gap: 8px; align-items: center; }
-  input[type=file] { flex: 1; font-size: 13px; }
-  .upload-btn {
-    padding: 8px 16px; background: #52c41a; font-size: 13px;
-    white-space: nowrap;
-  }
-  .upload-btn:hover { background: #3a9912; }
-  #upload-msg { font-size: 13px; margin-top: 8px; color: #52c41a; }
 </style>
 </head>
 <body>
@@ -67,14 +55,6 @@
   </div>
   <div id="result"></div>
 
-  <div class="upload-section">
-    <p>店主更新数据：上传新的 Excel 文件</p>
-    <div class="upload-row">
-      <input type="file" id="excel-file" accept=".xlsx,.xls" />
-      <button class="upload-btn" onclick="uploadFile()">上传更新</button>
-    </div>
-    <div id="upload-msg"></div>
-  </div>
 </div>
 <script>
   document.getElementById('q').addEventListener('keydown', e => {
@@ -100,25 +80,6 @@
         </div>
       `).join('');
     } catch { box.innerHTML = '<p class="empty">查询失败，请重试</p>'; }
-  }
-
-  async function uploadFile() {
-    const file = document.getElementById('excel-file').files[0];
-    const msg = document.getElementById('upload-msg');
-    if (!file) { msg.style.color='#e05c2a'; msg.textContent='请先选择文件'; return; }
-    const fd = new FormData();
-    fd.append('file', file);
-    msg.style.color='#888'; msg.textContent='上传中...';
-    try {
-      const res = await fetch('/upload', { method: 'POST', body: fd });
-      const json = await res.json();
-      if (json.success) {
-        msg.style.color='#52c41a';
-        msg.textContent = `更新成功，共 ${json.count} 条记录`;
-      } else {
-        msg.style.color='#e05c2a'; msg.textContent='更新失败：' + json.error;
-      }
-    } catch { msg.style.color='#e05c2a'; msg.textContent='上传失败，请重试'; }
   }
 </script>
 </body>
