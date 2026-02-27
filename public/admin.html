@@ -57,10 +57,13 @@
     if (e.key === 'Enter') login();
   });
 
+  let adminPwd = '';
+
   function login() {
     const pwd = document.getElementById('pwd').value;
     const msg = document.getElementById('msg');
     if (pwd === 'QCCJHM') {
+      adminPwd = pwd;
       document.getElementById('login-area').style.display = 'none';
       document.getElementById('upload-area').style.display = 'block';
       msg.textContent = '';
@@ -76,6 +79,7 @@
     if (!file) { msg.style.color='#e05c2a'; msg.textContent='请先选择文件'; return; }
     const fd = new FormData();
     fd.append('file', file);
+    fd.append('password', adminPwd);
     msg.style.color='#888'; msg.textContent='上传中...';
     try {
       const res = await fetch('/upload', { method: 'POST', body: fd });

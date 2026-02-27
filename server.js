@@ -52,6 +52,7 @@ app.post('/mark', (req, res) => {
 });
 
 app.post('/upload', upload.single('file'), (req, res) => {
+  if (req.body.password !== 'QCCJHM') return res.status(403).json({ success: false, error: '无权限' });
   try {
     const newData = parseExcel(req.file.path);
     let oldData = [];
