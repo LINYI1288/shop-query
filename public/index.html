@@ -94,7 +94,7 @@
         <div class="item">
           <div>
             <div class="name">${r.name}</div>
-            <div class="phone">${r.phone}</div>
+            <div class="phone">${r.phone.slice(0,3) + '****' + r.phone.slice(-4)}</div>
           </div>
           <div class="amount">${Number(r.amount).toFixed(2)}</div>
         </div>
