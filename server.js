@@ -30,6 +30,13 @@ function parseExcel(filePath) {
   return data;
 }
 
+app.get('/drawn-list', (req, res) => {
+  if (req.query.password !== 'QCCJHM') return res.status(403).json({ error: '无权限' });
+  const data = JSON.parse(fs.readFileSync(DATA_PATH, 'utf8'));
+  const drawn = data.filter(d => d.drawn);
+  res.json({ count: drawn.length, list: drawn });
+});
+
 app.get('/query', (req, res) => {
   const keyword = (req.query.q || '').trim();
   if (!keyword) return res.json({ results: [] });
